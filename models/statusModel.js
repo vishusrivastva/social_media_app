@@ -6,6 +6,7 @@ const statusSchema = mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
+      index: true,
     },
     text: String,
     image: String,
@@ -15,6 +16,8 @@ const statusSchema = mongoose.Schema(
   },
   { timestamps: true }
 );
+
+statusSchema.index({ createdAt: -1 });
 
 const Status = mongoose.model('Status', statusSchema);
 
