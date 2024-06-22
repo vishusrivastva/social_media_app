@@ -20,7 +20,7 @@ const likeStatus = asyncHandler(async (req, res) => {
         throw new Error('You already liked this status');
       }
     } else {
-      res.status(404);
+      res.status(403);
       throw new Error('You do not follow this user');
     }
     }

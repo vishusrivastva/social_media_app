@@ -1,22 +1,55 @@
 const asyncHandler = require("express-async-handler");
 const User = require("../models/userModel");
+const mongoose = require('mongoose');
 
 // @desc    Get user profile
 // @route   GET /api/users/:id
 // @access  Private
 const getUserProfile = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.params.id).select("-password")
-  .populate('followers', 'name')
-  .populate('following', 'name');
+  const user = await User.aggregate([
+    { $match: { _id: new mongoose.Types.ObjectId(req.params.id) } },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'followers',
+        foreignField: '_id',
+        as: 'followers'
+      }
+    },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'following',
+        foreignField: '_id',
+        as: 'following'
+      }
+    },
+    {
+      $project: {
+        _id: 1,
+        name: 1,
+        email: 1,
+        'followers._id': 1,
+        'followers.name': 1,
+        'following._id': 1,
+        'following.name': 1,
+        followersCount: { $size: '$followers' },
+        followingCount: { $size: '$following' }
+      }
+    }
+  ]);
 
-  if (user) {
-    res.json(user);
+  if (user.length > 0) {
+    res.json(user[0]);
   } else {
     res.status(404);
     throw new Error("User not found");
   }
 });
 
+module.exports = {
+  getUserProfile,
+};
 // @desc    Follow a user
 // @route   POST /api/users/:id/follow
 // @access  Private

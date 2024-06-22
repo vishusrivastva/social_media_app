@@ -25,7 +25,7 @@ const createComment = asyncHandler(async (req, res) => {
   
       res.status(201).json(createdComment);
     } else {
-      res.status(404);
+      res.status(403);
       throw new Error('You do not follow this user');
     }
     
