@@ -1,22 +1,49 @@
 const asyncHandler = require('express-async-handler');
 const Status = require('../models/statusModel');
 const User = require('../models/userModel');
+const upload = require('../middlewares/uploadMiddleware');
+const multer = require('multer'); 
 
 // @desc    Create a new status
 // @route   POST /api/statuses
 // @access  Private
 const createStatus = asyncHandler(async (req, res) => {
-  const { text, image, video } = req.body;
+  const uploadFields = upload.fields([
+    { name: 'image', maxCount: 1 },
+    { name: 'video', maxCount: 1 }
+  ]);
 
-  const status = new Status({
-    user: req.user._id,
-    text,
-    image,
-    video,
+  uploadFields(req, res, async function (err) {
+    if (err instanceof multer.MulterError) {
+      res.status(400);
+      throw new Error('File upload error: ' + err.message);
+    } else if (err) {
+      res.status(500);
+      throw new Error('Server error during upload: ' + err.message);
+    }
+
+    const { text } = req.body;
+    let image, video;
+
+    if (req.files) {
+      if (req.files['image']) {
+        image = req.files['image'][0].path;
+      }
+      if (req.files['video']) {
+        video = req.files['video'][0].path;
+      }
+    }
+
+    const status = new Status({
+      user: req.user._id,
+      text,
+      image,
+      video,
+    });
+
+    const createdStatus = await status.save();
+    res.status(201).json(createdStatus);
   });
-
-  const createdStatus = await status.save();
-  res.status(201).json(createdStatus);
 });
 
 // @desc    Get status by ID
