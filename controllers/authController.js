@@ -13,6 +13,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
   if (userExists) {
     res.status(400);
+    res.json({ success: false, message: 'User already exists' });
     throw new Error('User already exists');
   }
 
@@ -25,14 +26,15 @@ const registerUser = asyncHandler(async (req, res) => {
   });
 
   if (user) {
-    res.status(201).json({
+    res.status(201).json({success: true, data :{
       _id: user._id,
       name: user.name,
       email: user.email,
       token: generateToken(user._id),
-    });
+    }});
   } else {
     res.status(400);
+    res.json({ success: false, message: 'Invalid user data' });
     throw new Error('Invalid user data');
   }
 });
@@ -46,14 +48,15 @@ const authUser = asyncHandler(async (req, res) => {
   const user = await User.findOne({ email });
 
   if (user && (await user.matchPassword(password))) {
-    res.json({
+    res.json({success: true, data :{
       _id: user._id,
       name: user.name,
       email: user.email,
       token: generateToken(user._id),
-    });
+    }});
   } else {
     res.status(401);
+    res.json({ success: false, message: 'Invalid email or password' });
     throw new Error('Invalid email or password');
   }
 });

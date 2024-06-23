@@ -23,14 +23,16 @@ const createComment = asyncHandler(async (req, res) => {
       status.comments.push(createdComment._id);
       await status.save();
   
-      res.status(201).json(createdComment);
+      res.status(201).json({success: true, data: createdComment});
     } else {
       res.status(403);
+      res.json({success: false, message: 'You do not follow this user'})
       throw new Error('You do not follow this user');
     }
     
   } else {
     res.status(404);
+    res.json({success: false, message: 'Status not found'})
     throw new Error('Status not found');
   }
 });

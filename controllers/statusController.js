@@ -17,9 +17,11 @@ const createStatus = asyncHandler(async (req, res) => {
   uploadFields(req, res, async function (err) {
     if (err instanceof multer.MulterError) {
       res.status(400);
+      res.json({ success: false, message: 'File upload error: ' + err.message });
       throw new Error('File upload error: ' + err.message);
     } else if (err) {
       res.status(500);
+      res.json({ success: false, message: 'Server error during upload: ' + err.message });
       throw new Error('Server error during upload: ' + err.message);
     }
 
@@ -43,7 +45,7 @@ const createStatus = asyncHandler(async (req, res) => {
     });
 
     const createdStatus = await status.save();
-    res.status(201).json(createdStatus);
+    res.status(201).json({ success: true, data: createdStatus});
   });
 });
 
@@ -115,13 +117,15 @@ const getStatusById = asyncHandler(async (req, res) => {
 
   if (status.length > 0) {
     if (req.user._id.toString() === status[0].user._id.toString() || req.user.following.includes(status[0].user._id)) {
-      res.json(status[0]);
+      res.json({ success: true, data: status[0]});
     } else {
       res.status(403);
+      res.json({ success: false, message: 'You do not follow this user' });
       throw new Error('You do not follow this user');
     }
   } else {
     res.status(404);
+    res.json({ success: false, message: 'Status not found' });
     throw new Error('Status not found');
   }
 });
@@ -195,7 +199,7 @@ const getStatuses = asyncHandler(async (req, res) => {
     }
   ]).exec();
 
-  res.json(statuses);
+  res.json({ success: true, data: statuses});
 });
 module.exports = {
   createStatus,
