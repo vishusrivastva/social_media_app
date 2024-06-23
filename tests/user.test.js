@@ -5,10 +5,11 @@ const mongoose = require('mongoose');
 
 let token;
 let userId;
+let anotherUserId;
 
 beforeAll(async () => {
   await mongoose.connect(process.env.MONGO_URI);
-  
+
   // Create a user and get token
   const userRes = await request(app)
     .post('/api/auth/register')
@@ -17,8 +18,16 @@ beforeAll(async () => {
       email: 'test@example.com',
       password: 'password123'
     });
-  token = userRes.body.token;
-  userId = userRes.body._id;
+  token = userRes.body.data.token;
+  userId = userRes.body.data._id;
+
+  // Create another user to follow
+  const anotherUser = await User.create({
+    name: 'Another User',
+    email: 'another@example.com',
+    password: 'password123'
+  });
+  anotherUserId = anotherUser._id;
 });
 
 afterAll(async () => {
@@ -32,21 +41,29 @@ describe('User Controller', () => {
       .get(`/api/users/${userId}`)
       .set('Authorization', `Bearer ${token}`);
     expect(res.statusCode).toBe(200);
-    expect(res.body).toHaveProperty('name', 'Test User');
+    expect(res.body.success).toBe(true);
+    expect(res.body.data).toHaveProperty('name', 'Test User');
   });
 
   it('should follow a user', async () => {
-    // Create another user to follow
-    const anotherUser = await User.create({
-      name: 'Another User',
-      email: 'another@example.com',
-      password: 'password123'
-    });
-
     const res = await request(app)
-      .post(`/api/users/${anotherUser._id}/follow`)
+      .post(`/api/users/${anotherUserId}/follow`)
       .set('Authorization', `Bearer ${token}`);
     expect(res.statusCode).toBe(200);
-    expect(res.body).toHaveProperty('message', `You are now following ${anotherUser.name}`);
+    expect(res.body.success).toBe(true);
+    expect(res.body).toHaveProperty('message', `You are now following Another User`);
+  });
+
+  it('should unfollow a user', async () => {
+    await request(app)
+      .post(`/api/users/${anotherUserId}/follow`)
+      .set('Authorization', `Bearer ${token}`);
+
+    const res = await request(app)
+      .post(`/api/users/${anotherUserId}/unfollow`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(res.statusCode).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body).toHaveProperty('message', `You have unfollowed Another User`);
   });
 });

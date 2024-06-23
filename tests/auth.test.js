@@ -22,7 +22,8 @@ describe('Auth Controller', () => {
         password: 'password123'
       });
     expect(res.statusCode).toBe(201);
-    expect(res.body).toHaveProperty('token');
+    expect(res.body.success).toBe(true);
+    expect(res.body.data).toHaveProperty('token');
   });
 
   it('should authenticate a user', async () => {
@@ -33,6 +34,7 @@ describe('Auth Controller', () => {
         password: 'password123'
       });
     expect(res.statusCode).toBe(200);
-    expect(res.body).toHaveProperty('token');
+    expect(res.body.success).toBe(true);
+    expect(res.body.data).toHaveProperty('token');
   });
 });

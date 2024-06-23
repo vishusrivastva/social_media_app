@@ -18,7 +18,7 @@ beforeAll(async () => {
       email: 'test@example.com',
       password: 'password123'
     });
-  token = userRes.body.token;
+  token = userRes.body.data.token;
 });
 
 afterAll(async () => {
@@ -34,8 +34,9 @@ describe('Status Controller', () => {
       .set('Authorization', `Bearer ${token}`)
       .send({ text: 'Test status' });
     expect(res.statusCode).toBe(201);
-    expect(res.body).toHaveProperty('text', 'Test status');
-    statusId = res.body._id;
+    expect(res.body.success).toBe(true);
+    expect(res.body.data).toHaveProperty('text', 'Test status');
+    statusId = res.body.data._id;
   });
 
   it('should get a status by ID', async () => {
@@ -43,7 +44,8 @@ describe('Status Controller', () => {
       .get(`/api/statuses/${statusId}`)
       .set('Authorization', `Bearer ${token}`);
     expect(res.statusCode).toBe(200);
-    expect(res.body).toHaveProperty('text', 'Test status');
+    expect(res.body.success).toBe(true);
+    expect(res.body.data).toHaveProperty('text', 'Test status');
   });
 
   it('should get all statuses', async () => {
@@ -51,6 +53,7 @@ describe('Status Controller', () => {
       .get('/api/statuses')
       .set('Authorization', `Bearer ${token}`);
     expect(res.statusCode).toBe(200);
-    expect(Array.isArray(res.body)).toBeTruthy();
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.data)).toBeTruthy();
   });
 });
