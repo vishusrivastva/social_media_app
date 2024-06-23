@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const User = require('./models/userModel');
 const Status = require('./models/statusModel');
 const Comment = require('./models/commentModel');
-const bcrypt = require('bcryptjs');
+const { hashPassword } = require('./utils/hashPassword');
 const dotenv = require('dotenv');
 
 dotenv.config();
@@ -17,7 +17,7 @@ mongoose.connect(process.env.MONGO_URI, {
 const createUsers = async (count) => {
   const users = [];
   for (let i = 0; i < count; i++) {
-    const hashedPassword = await bcrypt.hash('password123', 10);
+    const hashedPassword = await hashPassword('password123');
     users.push({
       name: `User ${i + 1}`,
       email: `user${i + 1}@example.com`,
@@ -33,6 +33,7 @@ const setupFollows = async (users) => {
     users[i].following = followingUsers.map(user => user._id);
     for (let j = 0; j < followingUsers.length; j++) {
       followingUsers[j].followers.push(users[i]._id);
+      await followingUsers[j].save();
     }
     await users[i].save();
   }
@@ -53,8 +54,11 @@ const createStatuses = async (users) => {
 
 const addCommentsAndLikes = async (users, statuses) => {
   for (let status of statuses) {
-    const commenters = users.sort(() => 0.5 - Math.random()).slice(0, 5);
-    const likers = users.sort(() => 0.5 - Math.random()).slice(0, 5);
+    const potentialInteractors = users.filter(user => 
+      user._id.toString() === status.user.toString() || user.following.includes(status.user)
+    );
+    const commenters = potentialInteractors.sort(() => 0.5 - Math.random()).slice(0, 5);
+    const likers = potentialInteractors.sort(() => 0.5 - Math.random()).slice(0, 5);
 
     for (let commenter of commenters) {
       const comment = await Comment.create({
